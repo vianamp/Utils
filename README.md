@@ -7,4 +7,6 @@ Compendium of Scripts for
 
 	- Python
 
+	- Paraview
+
 	- PythonNotebook

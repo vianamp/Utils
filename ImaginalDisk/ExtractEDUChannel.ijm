@@ -1,0 +1,15 @@
+i = 11;
+run("Split Channels");
+selectWindow("C4-CA1_"+i+".lsm");
+close();
+selectWindow("C3-CA1_"+i+".lsm");
+close();
+selectWindow("C2-CA1_"+i+".lsm");
+selectWindow("C1-CA1_"+i+".lsm");
+close();
+selectWindow("C2-CA1_"+i+".lsm");
+run("Reslice [/]...", "output=1 start=Left");
+run("Save", "save=/Users/matheusviana/Dropbox/GitHub/proQuant/data/EDU-CA1_"+i+".tif");
+close();
+selectWindow("C2-CA1_"+i+".lsm");
+close();

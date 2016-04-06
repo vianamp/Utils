@@ -1,0 +1,16 @@
+1 - Run Reslice2.ijm and save the smooth volume (can be improved)
+	> Check which channels of .lsm files correspond to EDU and DAPI
+	> Make sure there is no "." in .lsm files names
+	> Check the images Preview-XXX to see whether ROI matches the resulting images
+
+2 - Use paraview to open the resulting smooth volumes and create 3D surface
+
+3 - Run the Python code makebox using Paraview in Mac Air
+
+4 - Run dapiSeg.cxx to get the files _Points.vtk
+
+5 - Run proQuant.cxx to get the files _results.txt
+
+6 - Run TestEDU-DAPI-Ratio.ijm
+
+7 - Run DistanceAnalyze.R

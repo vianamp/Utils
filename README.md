@@ -1,5 +1,5 @@
 # Utils
-Compendium of Scripts for
+Compendium of scripts used in different projects.
 
 	- R
 

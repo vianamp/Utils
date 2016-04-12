@@ -15,8 +15,15 @@ CreateNormAttribute <- function(Table,name) {
   return(Table)
 }
 
+TransformIntoPercentageInterval <- function(Vec) {
+  Vec <- factor(     x = round(Vec/0.11),
+                levels = seq(0,9,1),
+                labels = paste(seq(0,90,10),'%','-',seq(10,100,10),'%',sep=""))
+  return(Vec)
+}
+
 tEduDAPI <- 50
-nGroups <- 5
+nGroups <- 3
 
 RootFolder <- "/Volumes/WAILERS/UCI/Collaborators/Marcos/Data/Feb2016/WT/"
 
@@ -30,6 +37,17 @@ fig <- ggplot(Sizes) + geom_point(aes(x=AreaFlat,y=AreaFold)) + theme_bw() +
   xlab("Flat area (um2)") + ylab("Fold area (um2)")
 
 pdf("~/Desktop/FoldVsFlatArea.pdf",width = 6, height = 6,useDingbats=F); fig; dev.off()
+
+# Fold extension
+
+FoldExt <- data.frame(read.table(paste(RootFolder,"FoldExtension.txt",sep=""),header = T,sep=","))
+
+FoldExt$FoldExtensionP <- TransformIntoPercentageInterval(FoldExt$FoldExtension)
+
+fig <- ggplot(FoldExt) + geom_histogram(aes(x=FoldExtension,y=..count..),binwidth = 0.02) + theme_bw() +
+  xlab("Fold extension (%)") + ylab("Count") + coord_cartesian(xlim=c(0,1))
+
+pdf("~/Desktop/FoldExtension.pdf",width = 6, height = 6,useDingbats=F); fig; dev.off()
 
 # Edu-to-DAPI thresholds
 
@@ -71,13 +89,15 @@ for (name in unique(Threshold$file)) {
   Table <- within(Table,Prol<-edu/dapi)
   Table <- within(Table,Dividing<-Prol>=thresh)
   
-  Table$Normd <- factor(     x = round(Table$Normd/0.11),
-                        levels = seq(0,9,1),
-                        labels = paste(seq(0,90,10),'%','-',seq(10,100,10),'%',sep=""))
+  Table$Dist <- Table$Normd
   
-  TableS <- ddply(Table,~Normd,summarise,NCells=sum(Prol>0),NDividing=sum(Dividing))
+  Table$Normd <- TransformIntoPercentageInterval(Table$Normd)
+  
+  TableS <- ddply(Table,~Normd,summarise,Dist=mean(Dist),NCells=sum(Prol>0),NDividing=sum(Dividing))
   
   TableS <- within(TableS,ProlFraction <- NDividing/NCells)
+  
+  TableS$AreaFold <- Sizes$AreaFold[which(Sizes$Disk==name)]
   
   TableS$Id <- id
   TableS$Disk <- name
@@ -87,7 +107,7 @@ for (name in unique(Threshold$file)) {
     coord_cartesian(ylim = c(0,0.9)) + ggtitle(name) +
     scale_y_continuous(labels = percent)+
     theme(axis.text.x = element_text(angle = 45, hjust = 1))
-  
+
   Global <- rbind(Global,TableS)
   id <- id + 1
 }
@@ -127,6 +147,8 @@ dev.off()
 
   Global$Class <- Sizes$Class[match(Global$Disk,Sizes$Disk)]
   
+  Global$FoldExt <- FoldExt$FoldExtension[match(Global$Disk,FoldExt$Disk)]
+  
   fig <- ggplot(Global) +
     geom_point(aes(x=Normd,y=ProlFraction,group=Class),alpha=0.5,size=1) +
     geom_smooth(aes(x=Normd,y=ProlFraction,group=Class),col="red",size=1,method="loess") +
@@ -136,6 +158,44 @@ dev.off()
     facet_wrap(~Class,ncol=nGroups)
   
   pdf(paste("~/Desktop/FracOfDivCellsGrouped-nGroups",nGroups,"-tEduDAPI",tEduDAPI,".pdf",sep=""),width = 12, height=5,useDingbats=F); fig; dev.off()
+
+  # Scheme 2: equally spaced bins
   
- 
+  Sizes$Class <- findInterval(Sizes$AreaFold, hist(Sizes$AreaFold, breaks=seq(min(Sizes$AreaFold),max(Sizes$AreaFold),l=nGroups),plot = F)$breaks)
+  
+  Global$Class <- Sizes$Class[match(Global$Disk,Sizes$Disk)]
+  
+  fig <- ggplot(Global) +
+    geom_point(aes(x=Normd,y=ProlFraction,group=Class),alpha=0.5,size=1) +
+    geom_smooth(aes(x=Normd,y=ProlFraction,group=Class),col="red",size=1,method="loess") +
+    xlab("distance from the fold") + ylab("fraction of dividing cells") + theme_bw() +
+    coord_cartesian(ylim = c(0,0.3)) + scale_y_continuous(labels = percent)+
+    theme(axis.text.x = element_text(angle = 45, hjust = 1)) + 
+    facet_wrap(~Class,ncol=nGroups)
+  
+  pdf(paste("~/Desktop/FracOfDivCellsGrouped-EqSpace-nGroups",nGroups,"-tEduDAPI",tEduDAPI,".pdf",sep=""),width = 12, height=5,useDingbats=F); fig; dev.off()
+    
+  # Marco's format
+  
+  Global <- Global[with(Global, order(AreaFold,Dist)), ]
+  
+  Global$Disk <- factor(Global$Disk,levels = Sizes$Disk[order(Sizes$AreaFold)],labels = Sizes$Disk[order(Sizes$AreaFold)])
+  
+  fig <- ggplot(Global) + geom_line(aes(Dist,ProlFraction,group=Disk,col=AreaFold))+geom_vline(aes(xintercept=FoldExt))+
+    scale_colour_gradientn(colours = rainbow(7)) + facet_wrap(~Disk) +
+    xlab("distance from the fold") + ylab("fraction of dividing cells") + theme_bw() +
+    coord_cartesian(ylim = c(0,0.4)) + ggtitle("global average") +
+    scale_y_continuous(labels = percent)+
+    theme(axis.text.x = element_text(angle = 45, hjust = 1))
+  
+  pdf(paste("~/Desktop/FracOfDivCells-Color-tEduDAPI",tEduDAPI,".pdf",sep=""),width = 24, height=24,useDingbats=F); fig; dev.off()
+  
+  fig <- ggplot(Global) + geom_line(aes(Dist,ProlFraction,group=Disk,col=AreaFold))+geom_vline(aes(xintercept=FoldExt))+
+    scale_colour_gradientn(colours = rainbow(7)) +
+    xlab("distance from the fold") + ylab("fraction of dividing cells") + theme_bw() +
+    coord_cartesian(ylim = c(0,0.4)) + ggtitle("global average") +
+    scale_y_continuous(labels = percent)+
+    theme(axis.text.x = element_text(angle = 45, hjust = 1))
+  
+  pdf(paste("~/Desktop/FracOfDivCells-ColorAllTogether-tEduDAPI",tEduDAPI,".pdf",sep=""),width = 10, height=6,useDingbats=F); fig; dev.off()
   

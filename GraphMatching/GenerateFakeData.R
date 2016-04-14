@@ -151,7 +151,7 @@ PullOut <- function(g) {
 
 # Generating a fake two time points time-varying network
 
-g <- erdos.renyi.game(40,2.5/40,directed = F)
+g <- erdos.renyi.game(10,2.5/10,directed = F)
 
 r <- layout_with_kk(g)
 
@@ -166,15 +166,17 @@ V(g)$x = r[,1]
 V(g)$y = r[,2]
 V(g)$id <- seq(1,vcount(g),1)
 
-w <- MergeClosetsTwoNodes(g)
-w <- SplitLongestEdge(w)
-w <- PullOut(w)
-w <- Jiggle(w)
+#w <- MergeClosetsTwoNodes(g)
+#w <- SplitLongestEdge(w)
+w <- PullOut(g)
+#w <- Jiggle(w)
 
 png(filename=paste("/Users/mviana/Documents/ProjectsPersonal/Utils/GraphMatching/data/Graphs.png",sep=""))
   par(mfrow=c(1, 2))
-  plot(g,vertex.label=NA,vertex.size=10)
-  plot(w,vertex.label=NA,vertex.size=10)
+#  plot(g,vertex.label=NA,vertex.size=10)
+#  plot(w,vertex.label=NA,vertex.size=10)
+  plot(g,vertex.size=10,vertex.frame.color="gray")
+  plot(w,vertex.size=10,vertex.frame.color="gray")
 dev.off()
     
 ExportData(g,"/Users/mviana/Documents/ProjectsPersonal/Utils/GraphMatching/data/GraphT0",F)

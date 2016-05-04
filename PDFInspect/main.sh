@@ -15,7 +15,7 @@ FILENAME=$2
 pdftotext $DIR$SEP$FILENAME$PDFEXT
 echo -e ‘\n’ >> $DIR$SEP$FILENAME$TXTEXT
 
-echo 25%
+echo 20%
 
 # *****************************************************************
 # Step 2.	Rscript: Text parsing to get ready for AlchemyAPI
@@ -23,7 +23,7 @@ echo 25%
 
 Rscript --vanilla TextParser1.R $DIR $FILENAME
 
-echo 50%
+echo 40%
 
 # *****************************************************************
 # Step 3.	Python: Call AlchemyAPI for keyword detection
@@ -31,12 +31,23 @@ echo 50%
 
 python TextKeywordExtractor.py $DIR$SEP$FILENAME$TXTEXT
 
-echo 75%
+echo 60%
 
 # *****************************************************************
 # Step 4.	Rscript: Text parsing to make output more user friendly
 # *****************************************************************
 
 Rscript --vanilla TextParser2.R $DIR $FILENAME
+
+echo 80%
+
+# *****************************************************************
+# Step 5.	Rscript: Detecting images in PDFs documents
+# *****************************************************************
+
+Rscript --vanilla ImageParser.R $DIR $FILENAME
+
+mv $DIR/$FILENAME".csv" "/Users/mviana/Documents/ProjectsIBM/PDFminer/resultsD3/pdf.csv"
+mv $DIR/$FILENAME"-layout.json" "/Users/mviana/Documents/ProjectsIBM/PDFminer/resultsD3/pdf.json"
 
 echo 100%

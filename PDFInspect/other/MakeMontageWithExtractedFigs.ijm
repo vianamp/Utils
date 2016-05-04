@@ -15,22 +15,25 @@ function randomInt(n) {
 
 _RootFolder = getDirectory("Choose a Directory");
 
+ext = "jpg";
+Lx = 200;
+
 setBatchMode(true);
 
 _List = getFileList(_RootFolder);
 
 valid = 0;
 for (item = 0; item < _List.length; item++) {
-	if ( endsWith(_List[item],".jpg") ) {
+	if ( endsWith(_List[item],ext) ) {
 		open(_List[item]);
-		if (getWidth()>100 && getHeight()>100) {
+		if (getWidth()>Lx && getHeight()>Lx) {
 			valid++;			
 		}
 		close();
 	}
 }
 
-newImage("Stack", "RGB black", 100, 100, valid);
+newImage("Stack", "RGB black", Lx, Lx, valid);
 STACK = getImageID;
 
 S = newArray(valid);
@@ -41,12 +44,12 @@ shuffle(S);
 
 valid = 0;
 for (item = 0; item < _List.length; item++) {
-	if ( endsWith(_List[item],".jpg") ) {
+	if ( endsWith(_List[item],ext) ) {
 		open(_List[item]);
-		if (getWidth()>100 && getHeight()>100) {
-			xo = random()*(getWidth()-100);
-			yo = random()*(getHeight()-100);
-			makeRectangle(xo,yo,100,100);
+		if (getWidth()>Lx && getHeight()>Lx) {
+			xo = random()*(getWidth()-Lx);
+			yo = random()*(getHeight()-Lx);
+			makeRectangle(xo,yo,Lx,Lx);
 			run("Copy");
 			close();
 			selectImage(STACK);

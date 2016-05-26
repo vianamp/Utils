@@ -33,14 +33,20 @@ if (ntiff== 0) {
 }
 
 // Generating the max projection stack
-std = 1;
+std = 0;
 norm_to_8 = 0;
+orthogonal = 1;
 
 if (norm_to_8) {
 	newImage("MaxProjs", "8-bit black", w, h, ntiff);
 } else {
-	newImage("MaxProjs", "16-bit black", w, h, ntiff);		
+	if (orthogonal) {
+		newImage("MaxProjs", "16-bit black", w, h+100, ntiff);
+	} else {
+		newImage("MaxProjs", "16-bit black", w, h, ntiff);
+	}
 }
+MAXP = getImageID;
 
 item = 0; im = 0;
 while (item < _List.length)  {
@@ -48,6 +54,8 @@ while (item < _List.length)  {
 	if ( endsWith(_List[item],".tif") ) {
 		im++;
 		open(_List[item]);	
+		ORIGINAL = getImageID;
+		
 		_FileName = split(_List[item],"."); 
 		_FileName = _FileName[0];
 		print(_FileName);
@@ -63,16 +71,36 @@ while (item < _List.length)  {
 		}
 		run("Copy");
 		close();
-		close();
 
+		selectImage(MAXP);
 		setSlice(im);
+		makeRectangle(0,0,w,h);
 		run("Paste");
 		setMetadata("Label",_FileName);
+
+		if (orthogonal) {
+			selectImage(ORIGINAL);
+			nz = nSlices;
+			run("Reslice [/]...", "output=1.000 start=Top avoid");
+			run("Z Project...", "start=1 stop=" + nSlices + " projection=[Max Intensity]");
+			run("Copy");
+			close();
+			close();
+			selectImage(MAXP);
+			makeRectangle(0,h+100-nz,w,nz);
+			run("Paste");
+		}
+		
+		selectImage(ORIGINAL);
+		close();
 	}
 	item++;
 }
 
+run("Select None");
+resetMinAndMax();
+
 // Saving max projection stack
-//run("Save", "save=" + _RootFolder + "MaxProjs.tif");
+run("Save", "save=" + _RootFolder + "MaxProjs.tif");
 
 setBatchMode(false);

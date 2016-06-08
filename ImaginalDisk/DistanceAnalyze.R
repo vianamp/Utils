@@ -24,11 +24,12 @@ TransformIntoPercentageInterval <- function(Vec) {
 
 tEduDAPI <- 50
 nGroups <- 5
-gylim <- 0.4
+gylim <- 0.002
 
-folders<-list(path=c("/Volumes/WAILERS/UCI/Collaborators/Marcos/Data/May2016/LateInstar/",
+folders<-list(path=c("/Volumes/WAILERS/UCI/Collaborators/Marcos/Data/May2016/EarlyInstar/",
+                     "/Volumes/WAILERS/UCI/Collaborators/Marcos/Data/May2016/LateInstar/",
                      "/Volumes/WAILERS/UCI/Collaborators/Marcos/Data/Feb2016/WT2/"),
-              name=c("New", "Old"))
+              name=c("EarlyInstar","LateInstar","OldWTData"))
 
 Sizes <- NULL
 
@@ -37,16 +38,17 @@ for(RootFolder in folders$path){
   S <- data.frame(read.table(paste(RootFolder,"Sizes.txt",sep=""),header = T,sep=","))
   S$AreaFlat <- S$AreaFlat * (0.1317882^2)
   S$AreaFold <- S$AreaFold * (0.1317882^2)
+  S$Data <- folders$name[which(folders$path==RootFolder)]
 
   Sizes <- rbind(Sizes, S)
 }
 
 # Fold versus flat region area
 
-fig <- ggplot(Sizes) + geom_point(aes(x=AreaFlat,y=AreaFold)) + theme_bw() +
+fig <- ggplot(Sizes) + geom_point(aes(x=AreaFlat,y=AreaFold,col=Data)) + theme_bw() +
   xlab("Flat area (um2)") + ylab("Fold area (um2)")
 
-pdf("~/Desktop/FoldVsFlatArea.pdf",width = 6, height = 6,useDingbats=F); fig; dev.off()
+pdf("~/Desktop/ImaginalDisk/FoldVsFlatArea.pdf",width = 6, height = 6,useDingbats=F); fig; dev.off()
 
 # Fold extension
 
@@ -65,7 +67,7 @@ for(RootFolder in folders$path) {
 fig <- ggplot(FoldExt) + geom_histogram(aes(x=FoldExtension,y=..count..),binwidth = 0.02) + theme_bw() +
   xlab("Fold extension (%)") + ylab("Count") + coord_cartesian(xlim=c(0,1))
 
-pdf("~/Desktop/FoldExtension.pdf",width = 6, height = 6,useDingbats=F); fig; dev.off()
+pdf("~/Desktop/ImaginalDisk/FoldExtension.pdf",width = 6, height = 6,useDingbats=F); fig; dev.off()
 
 # Edu-to-DAPI thresholds
 
@@ -94,7 +96,7 @@ fig <- ggplot(Threshold) + geom_boxplot(aes(x=file,y=ratio,fill=file)) + theme_b
   ggtitle(paste("global average = ",mean(Threshold$ratio),sep="")) +
   coord_cartesian(ylim = c(0,5))
 
-pdf("~/Desktop/EduDapiRatios.pdf",width = 8, height = 8,useDingbats=F); fig; dev.off()
+pdf("~/Desktop/ImaginalDisk/EduDapiRatios.pdf",width = 16, height = 8,useDingbats=F); fig; dev.off()
 
 id <- 1
 Fig <- list()
@@ -122,7 +124,7 @@ for (text in unique(paste(Threshold$folder,Threshold$file,sep='.'))) {
   
   TableS <- ddply(Table,~Normd,summarise,Dist=mean(Dist),NCells=sum(Prol>0),NDividing=sum(Dividing))
   
-  TableS <- within(TableS,ProlFraction <- NDividing/NCells)
+  TableS <- within(TableS,ProlFraction <- NDividing/(NCells*sum(NDividing)))
   
   TableS$AreaFold <- Sizes$AreaFold[which(Sizes$Disk==name)]
   
@@ -147,7 +149,7 @@ Fig[["global"]] <- ggplot(Global) +
   scale_y_continuous(labels = percent)+
   theme(axis.text.x = element_text(angle = 45, hjust = 1))
 
-pdf(paste("~/Desktop/FracOfDivCells-tEduDAPI",tEduDAPI,".pdf",sep=""),width = 24, height=24,useDingbats=F);
+pdf(paste("~/Desktop/ImaginalDisk/FracOfDivCells-tEduDAPI",tEduDAPI,".pdf",sep=""),width = 24, height=24,useDingbats=F);
   do.call("grid.arrange", c(Fig, ncol=8))
 dev.off()
 
@@ -156,12 +158,12 @@ dev.off()
 rm(Fig)
 Fig <- list()
 Fig[["hist1"]] <- ggplot(Sizes) + geom_histogram(aes(x=AreaFold),binwidth=5E2,col="white") +
-  theme_bw() + xlab("Fold area (um2)") + ylab("Count") + coord_cartesian(ylim = c(0,10))
+  theme_bw() + xlab("Fold area (um2)") + ylab("Count") + coord_cartesian(ylim = c(0,30))
 
 Fig[["hist2"]] <- ggplot(Sizes) + geom_histogram(aes(x=AreaFold,y=cumsum(..count..)),binwidth=5E2,col="white") +
-  theme_bw() + xlab("Fold area (um2)") + ylab("Cumulative count") + coord_cartesian(ylim = c(0,40))
+  theme_bw() + xlab("Fold area (um2)") + ylab("Cumulative count") + coord_cartesian(ylim = c(0,90))
 
-pdf("~/Desktop/HistFoldArea.pdf",width = 6, height=3,useDingbats=F);
+pdf("~/Desktop/ImaginalDisk/HistFoldArea.pdf",width = 6, height=3,useDingbats=F);
   do.call("grid.arrange", c(Fig, ncol=2))
 dev.off()
 
@@ -184,7 +186,7 @@ dev.off()
     theme(axis.text.x = element_text(angle = 45, hjust = 1)) + 
     facet_wrap(~Class,ncol=nGroups)
   
-  pdf(paste("~/Desktop/FracOfDivCellsGrouped-nGroups",nGroups,"-tEduDAPI",tEduDAPI,".pdf",sep=""),width = 12, height=5,useDingbats=F); fig; dev.off()
+  pdf(paste("~/Desktop/ImaginalDisk/FracOfDivCellsGrouped-nGroups",nGroups,"-tEduDAPI",tEduDAPI,".pdf",sep=""),width = 12, height=5,useDingbats=F); fig; dev.off()
 
   # Scheme 2: equally spaced bins
   
@@ -200,7 +202,7 @@ dev.off()
     theme(axis.text.x = element_text(angle = 45, hjust = 1)) + 
     facet_wrap(~Class,ncol=nGroups)
   
-  pdf(paste("~/Desktop/FracOfDivCellsGrouped-EqSpace-nGroups",nGroups,"-tEduDAPI",tEduDAPI,".pdf",sep=""),width = 12, height=5,useDingbats=F); fig; dev.off()
+  pdf(paste("~/Desktop/ImaginalDisk/FracOfDivCellsGrouped-EqSpace-nGroups",nGroups,"-tEduDAPI",tEduDAPI,".pdf",sep=""),width = 12, height=5,useDingbats=F); fig; dev.off()
     
   # Marco's format
   
@@ -215,7 +217,7 @@ dev.off()
     scale_y_continuous(labels = percent)+
     theme(axis.text.x = element_text(angle = 45, hjust = 1))
   
-  pdf(paste("~/Desktop/FracOfDivCells-Color-tEduDAPI",tEduDAPI,".pdf",sep=""),width = 24, height=24,useDingbats=F); fig; dev.off()
+  pdf(paste("~/Desktop/ImaginalDisk/FracOfDivCells-Color-tEduDAPI",tEduDAPI,".pdf",sep=""),width = 24, height=24,useDingbats=F); fig; dev.off()
   
   fig <- ggplot(Global) + geom_line(aes(Dist,ProlFraction,group=Disk,col=AreaFold))+geom_vline(aes(xintercept=FoldExt))+
     scale_colour_gradientn(colours = rainbow(7)) +
@@ -224,5 +226,5 @@ dev.off()
     scale_y_continuous(labels = percent)+
     theme(axis.text.x = element_text(angle = 45, hjust = 1))
   
-  pdf(paste("~/Desktop/FracOfDivCells-ColorAllTogether-tEduDAPI",tEduDAPI,".pdf",sep=""),width = 10, height=6,useDingbats=F); fig; dev.off()
+  pdf(paste("~/Desktop/ImaginalDisk/FracOfDivCells-ColorAllTogether-tEduDAPI",tEduDAPI,".pdf",sep=""),width = 10, height=6,useDingbats=F); fig; dev.off()
   

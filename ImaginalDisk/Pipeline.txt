@@ -7,15 +7,20 @@
 	> Remove "-smooth" from disks file's name
 
 3 - Use makebox.py in Paraview
+	> Monitore the disk's size and save in the file Sizes.txt
 
 4 - Run dapiSeg.cxx to get the files _Points.vtk
 
 5 - Run proQuant.cxx to get the files _results.txt
 
 6 - Run TestEDU-DAPI-Ratio.ijm
+	> Check which channels of .lsm files correspond to EDU and DAPI
 
-7 - Run DistanceAnalyze.R
+7 - Use flatextension.py in paraview to calculate the area of the flat region.
 
+8 - Run DistanceAnalyze.R
+
+----------------------
 original:
 	xy = 0.1317882µm
 	dz = 1.5µm
@@ -23,3 +28,4 @@ original:
 sliced:
 	xy = 0.1317882µm
 	dz = 1.0µm
+----------------------

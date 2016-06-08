@@ -3,9 +3,10 @@
 	> Make sure there is no "." in .lsm files names
 	> Check the images Preview-XXX to see whether ROI matches the resulting images
 
-2 - Use paraview to open the resulting smooth volumes and create 3D surface
+2 - Use gendisk.py in paraview to create 3D surface
+	> Remove "-smooth" from disks file's name
 
-3 - Run the Python code makebox using Paraview in Mac Air
+3 - Use makebox.py in Paraview
 
 4 - Run dapiSeg.cxx to get the files _Points.vtk
 
@@ -14,3 +15,11 @@
 6 - Run TestEDU-DAPI-Ratio.ijm
 
 7 - Run DistanceAnalyze.R
+
+original:
+	xy = 0.1317882µm
+	dz = 1.5µm
+
+sliced:
+	xy = 0.1317882µm
+	dz = 1.0µm

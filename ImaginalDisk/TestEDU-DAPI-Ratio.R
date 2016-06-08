@@ -5,7 +5,7 @@ library(scales)
 library(ggplot2)
 library(gridExtra)
 
-RootFolder <- "/Volumes/WAILERS/UCI/Collaborators/Marcos/Data/Feb2016/WT/ForAnalysius/"
+RootFolder <- "/Volumes/WAILERS/UCI/Collaborators/Marcos/Data/May2016/LateInstar/"
 
 EDUDAPI <- data.frame(read.table(paste(RootFolder,"EDU-DAPI-Ratio.txt",sep=""),header = T))
 

@@ -23,13 +23,23 @@ TransformIntoPercentageInterval <- function(Vec) {
 }
 
 tEduDAPI <- 50
-nGroups <- 3
+nGroups <- 5
+gylim <- 0.4
 
-RootFolder <- "/Volumes/WAILERS/UCI/Collaborators/Marcos/Data/Feb2016/WT/"
+folders<-list(path=c("/Volumes/WAILERS/UCI/Collaborators/Marcos/Data/May2016/LateInstar/",
+                     "/Volumes/WAILERS/UCI/Collaborators/Marcos/Data/Feb2016/WT2/"),
+              name=c("New", "Old"))
 
-Sizes <- data.frame(read.table(paste(RootFolder,"Sizes.txt",sep=""),header = T,sep=","))
-Sizes$AreaFlat <- Sizes$AreaFlat * (0.1317882^2)
-Sizes$AreaFold <- Sizes$AreaFold * (0.1317882^2)
+Sizes <- NULL
+
+for(RootFolder in folders$path){
+
+  S <- data.frame(read.table(paste(RootFolder,"Sizes.txt",sep=""),header = T,sep=","))
+  S$AreaFlat <- S$AreaFlat * (0.1317882^2)
+  S$AreaFold <- S$AreaFold * (0.1317882^2)
+
+  Sizes <- rbind(Sizes, S)
+}
 
 # Fold versus flat region area
 
@@ -40,9 +50,17 @@ pdf("~/Desktop/FoldVsFlatArea.pdf",width = 6, height = 6,useDingbats=F); fig; de
 
 # Fold extension
 
-FoldExt <- data.frame(read.table(paste(RootFolder,"FoldExtension.txt",sep=""),header = T,sep=","))
+FoldExt <- NULL
 
-FoldExt$FoldExtensionP <- TransformIntoPercentageInterval(FoldExt$FoldExtension)
+for(RootFolder in folders$path) {
+
+  FE <- data.frame(read.table(paste(RootFolder,"FoldExtension.txt",sep=""),header = T,sep=","))
+
+  FE$FoldExtensionP <- TransformIntoPercentageInterval(FE$FoldExtension)
+
+  FoldExt <- rbind(FoldExt,FE)
+  
+}
 
 fig <- ggplot(FoldExt) + geom_histogram(aes(x=FoldExtension,y=..count..),binwidth = 0.02) + theme_bw() +
   xlab("Fold extension (%)") + ylab("Count") + coord_cartesian(xlim=c(0,1))
@@ -51,20 +69,25 @@ pdf("~/Desktop/FoldExtension.pdf",width = 6, height = 6,useDingbats=F); fig; dev
 
 # Edu-to-DAPI thresholds
 
-ratios <- list.files(path = RootFolder, pattern = "\\-Ratio.txt$")
-
 Threshold <- NULL
-for (name in ratios) {
-  Table <- read.table(file = paste(RootFolder,"/",name,sep=""),header = F,skip = 1)
-  Table <- data.frame(EDU=Table$V2[1:(nrow(Table)/2)],DAPI=Table$V2[(nrow(Table)/2+1):nrow(Table)])
-  temp <- strsplit(name,"-")
-  if (length(temp[[1]])==2) {
-    temp <- temp[[1]][1]
-  } else {
-    temp <- paste(temp[[1]][1],"-",temp[[1]][2],sep="")
+for(RootFolder in folders$path) {
+
+  ratios <- list.files(path = RootFolder, pattern = "\\-Ratio.txt$")
+  
+  TH <- NULL
+  for (name in ratios) {
+    Table <- read.table(file = paste(RootFolder,"/",name,sep=""),header = F,skip = 1)
+    Table <- data.frame(EDU=Table$V2[1:(nrow(Table)/2)],DAPI=Table$V2[(nrow(Table)/2+1):nrow(Table)])
+    temp <- strsplit(name,"-")
+    if (length(temp[[1]])==2) {
+      temp <- temp[[1]][1]
+    } else {
+      temp <- paste(temp[[1]][1],"-",temp[[1]][2],sep="")
+    }
+    TH <- rbind(TH,data.frame(ratio=Table$EDU/Table$DAPI,file=temp,folder=RootFolder))
   }
-  Threshold <- rbind(Threshold,data.frame(ratio=Table$EDU/Table$DAPI,file=temp))
-}
+  Threshold <- rbind(Threshold,TH)
+}  
 
 fig <- ggplot(Threshold) + geom_boxplot(aes(x=file,y=ratio,fill=file)) + theme_bw() +
   theme(legend.position="none",axis.text.x = element_text(angle = 90, hjust = 0)) +
@@ -76,7 +99,11 @@ pdf("~/Desktop/EduDapiRatios.pdf",width = 8, height = 8,useDingbats=F); fig; dev
 id <- 1
 Fig <- list()
 Global <- NULL
-for (name in unique(Threshold$file)) {
+for (text in unique(paste(Threshold$folder,Threshold$file,sep='.'))) {
+  
+  RootFolder <- strsplit(text,'\\.')[[1]][1]
+  name <- strsplit(text,'\\.')[[1]][2]
+  
   Table <- data.frame(read.table(file = paste(RootFolder,"/",name,"_results.txt",sep=""),header = F))
   names(Table) <- c("x","y","z","d","dapi","edu")
   
@@ -104,7 +131,7 @@ for (name in unique(Threshold$file)) {
   
   Fig[[name]] <- ggplot(TableS,aes(x=Normd,y=ProlFraction)) + geom_point(size=2) + 
     xlab("distance from the fold") + ylab("fraction of dividing cells") + theme_bw() +
-    coord_cartesian(ylim = c(0,0.9)) + ggtitle(name) +
+    coord_cartesian(ylim = c(0,gylim)) + ggtitle(name) +
     scale_y_continuous(labels = percent)+
     theme(axis.text.x = element_text(angle = 45, hjust = 1))
 
@@ -116,12 +143,12 @@ Fig[["global"]] <- ggplot(Global) +
   geom_point(aes(x=Normd,y=ProlFraction,group=1),alpha=0.5,size=1) +
   geom_smooth(aes(x=Normd,y=ProlFraction,group=1),col="red",size=1,method="loess") +
   xlab("distance from the fold") + ylab("fraction of dividing cells") + theme_bw() +
-  coord_cartesian(ylim = c(0,0.3)) + ggtitle("global average") +
+  coord_cartesian(ylim = c(0,gylim)) + ggtitle("global average") +
   scale_y_continuous(labels = percent)+
   theme(axis.text.x = element_text(angle = 45, hjust = 1))
 
 pdf(paste("~/Desktop/FracOfDivCells-tEduDAPI",tEduDAPI,".pdf",sep=""),width = 24, height=24,useDingbats=F);
-  do.call("grid.arrange", c(Fig, ncol=6))
+  do.call("grid.arrange", c(Fig, ncol=8))
 dev.off()
 
 # Creating nGroups groups of disks based on their fold size
@@ -141,7 +168,7 @@ dev.off()
   # Scheme 1: not even spacing (bins with same number of disks)
   Groups <- sort(rep(seq(1,nGroups,1),nrow(Sizes)/nGroups))
   if (length(Groups) < nrow(Sizes)) {
-    Groups <- c(Groups[1],Groups)
+    Groups <- c(rep(Groups[1],times=nrow(Sizes)-length(Groups)),Groups)
   }
   Sizes$Class[order(Sizes$AreaFold)] <- Groups
 
@@ -153,7 +180,7 @@ dev.off()
     geom_point(aes(x=Normd,y=ProlFraction,group=Class),alpha=0.5,size=1) +
     geom_smooth(aes(x=Normd,y=ProlFraction,group=Class),col="red",size=1,method="loess") +
     xlab("distance from the fold") + ylab("fraction of dividing cells") + theme_bw() +
-    coord_cartesian(ylim = c(0,0.3)) + scale_y_continuous(labels = percent)+
+    coord_cartesian(ylim = c(0,gylim)) + scale_y_continuous(labels = percent)+
     theme(axis.text.x = element_text(angle = 45, hjust = 1)) + 
     facet_wrap(~Class,ncol=nGroups)
   
@@ -169,7 +196,7 @@ dev.off()
     geom_point(aes(x=Normd,y=ProlFraction,group=Class),alpha=0.5,size=1) +
     geom_smooth(aes(x=Normd,y=ProlFraction,group=Class),col="red",size=1,method="loess") +
     xlab("distance from the fold") + ylab("fraction of dividing cells") + theme_bw() +
-    coord_cartesian(ylim = c(0,0.3)) + scale_y_continuous(labels = percent)+
+    coord_cartesian(ylim = c(0,gylim)) + scale_y_continuous(labels = percent)+
     theme(axis.text.x = element_text(angle = 45, hjust = 1)) + 
     facet_wrap(~Class,ncol=nGroups)
   
@@ -184,7 +211,7 @@ dev.off()
   fig <- ggplot(Global) + geom_line(aes(Dist,ProlFraction,group=Disk,col=AreaFold))+geom_vline(aes(xintercept=FoldExt))+
     scale_colour_gradientn(colours = rainbow(7)) + facet_wrap(~Disk) +
     xlab("distance from the fold") + ylab("fraction of dividing cells") + theme_bw() +
-    coord_cartesian(ylim = c(0,0.4)) + ggtitle("global average") +
+    coord_cartesian(ylim = c(0,gylim)) + ggtitle("global average") +
     scale_y_continuous(labels = percent)+
     theme(axis.text.x = element_text(angle = 45, hjust = 1))
   
@@ -193,7 +220,7 @@ dev.off()
   fig <- ggplot(Global) + geom_line(aes(Dist,ProlFraction,group=Disk,col=AreaFold))+geom_vline(aes(xintercept=FoldExt))+
     scale_colour_gradientn(colours = rainbow(7)) +
     xlab("distance from the fold") + ylab("fraction of dividing cells") + theme_bw() +
-    coord_cartesian(ylim = c(0,0.4)) + ggtitle("global average") +
+    coord_cartesian(ylim = c(0,gylim)) + ggtitle("global average") +
     scale_y_continuous(labels = percent)+
     theme(axis.text.x = element_text(angle = 45, hjust = 1))
   

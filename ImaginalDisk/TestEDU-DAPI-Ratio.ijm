@@ -1,6 +1,6 @@
 _RootFolder = getDirectory("Choose a Directory");
 
-//setBatchMode(true);
+setBatchMode(true);
 
 _FileList = getFileList(_RootFolder);
 

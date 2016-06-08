@@ -26,7 +26,7 @@ system(paste("pdftocairo ",RootFolder,"/",filename,".pdf"," -png -gray -q ",Root
 
 PNGFiles <- list.files(path = RootFolder, pattern = "\\.png$")
 
-sink(paste(RootFolder,"/",filename,"-layout.json",sep=""))
+sink(paste(RootFolder,"/",filename,".json",sep=""))
 
 cat("{\n")
 cat("\t\"page\":\n")
@@ -47,14 +47,13 @@ for (fname in PNGFiles) {
     cat("\t\t{\n")
     cat(paste("\t\t\"number\":",page_number,",\n",sep=""))
     cat(paste("\t\t\"width\":",width,",\n",sep=""))
+    cat(paste("\t\t\"height\":",height,",\n",sep=""))
     if (output != "") {
-      cat(paste("\t\t\"height\":",height,",\n",sep=""))
       cat("\t\t\"rectangle\":\n")
       cat("\t\t[\n")
       cat(output,sep = "\n")
       cat("\t\t]\n")
     } else {
-      cat(paste("\t\t\"height\":",height,",\n",sep=""))
       cat("\t\t\"rectangle\":[]\n")
     }
     if (fname != PNGFiles[length(PNGFiles)]) {

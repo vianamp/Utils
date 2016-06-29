@@ -5,10 +5,22 @@ import math
 import numpy
 import paraview.servermanager
 
-Surface = servermanager.Fetch(GetActiveSource())
+#Source
+Source = GetActiveSource()
+
+#Source file name
+FileName = os.path.basename(Source.FileNames[0])
+FileName = os.path.splitext(FileName)[0]
+
+Normals1 = GenerateSurfaceNormals(Input=Source,ComputeCellNormals=1)
+
+Triangulate1 = Triangulate(Normals1)
+
+Surface = servermanager.Fetch(Triangulate1)
 
 Cells = Surface.GetCellData()
-Vectors = Cells.GetArray(1)
+
+Vectors = Cells.GetArray('Normals')
 
 area_fold = 0
 area_flat = 0
@@ -21,4 +33,5 @@ for c in range(0,Vectors.GetNumberOfTuples()):
 
 print FileName
 print 'Area flat = %f, Area fold = %f' %(area_flat,area_fold)
+
 

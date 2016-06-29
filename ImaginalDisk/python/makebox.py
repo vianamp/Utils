@@ -5,7 +5,7 @@ import math
 import numpy
 import paraview.servermanager
 
-fold_on_right_side = 1
+fold_on_right_side = 0
 
 #Active Render
 renderView1 = GetActiveViewOrCreate('RenderView')
@@ -121,7 +121,7 @@ TempPath = Path + '/Temp.vtk'
 SaveData(TempPath, proxy=clean1)
 
 FileName = FileName + "Dec"
-cmd = "/Users/mviana/Dropbox/GitHub/SurfaceTrim/build/SurfaceTrim.app/Contents/MacOS/SurfaceTrim -path %s -file Temp -save %s -nodes %d %d %d" %(Path,FileName,i,k,j)
+cmd = "/Users/viana/Dropbox/GitHub/SurfaceTrim/build/SurfaceTrim.app/Contents/MacOS/SurfaceTrim -path %s -file Temp -save %s -nodes %d %d %d" %(Path,FileName,i,k,j)
 
 os.system(cmd)
 

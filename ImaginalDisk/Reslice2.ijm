@@ -21,11 +21,14 @@ while (i < _FileList.length)  {
 		run("Duplicate...", "title=ToProcess duplicate channels=1");
 		DUPC1 = getImageID;
 		run("Reslice [/]...", "output=1.0 start=Left");
+		w = getWidth;
+		h = getHeight;
+		n = nSlices;
 		RESC1 = getImageID;
 		setSlice(nSlices*0.5);
 		resetMinAndMax();
 		run("Save", "save=" + _RootFolder + "/" + _Prefix + "-EDU.tif");
-		selectImage(DUPC1);
+		selectImage(DUPC1);		
 		close();
 
 		selectImage(ORIGINAL);
@@ -59,14 +62,17 @@ while (i < _FileList.length)  {
 		selectWindow("RGB");
 		roiManager("select",0.5*roiManager("count"));
 		saveAs("PNG", _RootFolder + "/Preview-" + _Prefix + ".png");
+		close();
 		
 		// Creating smooth disk based on hand-trace contour
 		// ------------------------------------------------
 
-		run("Select All");
-		run("Clear","stack");
-		run("8-bit");
-		run("16-bit");
+		newImage("Smooth", "16-bit black", w, h, n);
+
+		//run("Select All");
+		//run("Clear","stack");
+		//run("8-bit");
+		//run("16-bit");
 		
 		for (roi = 0; roi < roiManager("count"); roi++) {
 			roiManager("select",roi);

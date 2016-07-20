@@ -35,7 +35,7 @@ if (ntiff== 0) {
 // Generating the max projection stack
 std = 0;
 norm_to_8 = 0;
-orthogonal = 1;
+orthogonal = 0;
 
 if (norm_to_8) {
 	newImage("MaxProjs", "8-bit black", w, h, ntiff);

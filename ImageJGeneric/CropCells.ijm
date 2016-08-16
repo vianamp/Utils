@@ -16,7 +16,7 @@ function randomInt(n) {
 _RootFolder = getDirectory("Choose a Directory");
 
 ext = "tif";
-Lx = 128;
+Lx = 100;
 
 setBatchMode(true);
 
@@ -33,11 +33,12 @@ for (item = 0; item < _List.length; item++) {
 	}
 }
 
-newImage("Stack", "RGB black", Lx, Lx, valid);
+nrep = 2;
+newImage("Stack", "RGB black", Lx, Lx, nrep*valid);
 STACK = getImageID;
 
-S = newArray(valid);
-for (i = 0; i < valid; i++) {
+S = newArray(nrep*valid);
+for (i = 0; i < nrep*valid; i++) {
 	S[i] = i + 1;
 }
 shuffle(S);
@@ -45,29 +46,32 @@ shuffle(S);
 valid = 0;
 for (item = 0; item < _List.length; item++) {
 	if ( endsWith(_List[item],ext) ) {
-		open(_List[item]);
-		if (getWidth()>Lx && getHeight()>Lx) {
-			avg_pix = 1E5;
-			for (r = 0; r < 1000; r++) {
-				xo = random()*(getWidth()-Lx);
-				yo = random()*(getHeight()-Lx);
-				makeRectangle(xo,yo,Lx,Lx);
-				getStatistics(area, mean, min, max, std);
-				if (mean < avg_pix) {
-					avg_pix = mean;
-					_x = xo;
-					_y = yo;
+		for (w = 0; w < nrep; w++) {
+			open(_List[item]);
+			if (getWidth()>Lx && getHeight()>Lx) {
+				avg_pix = 1E5;
+				for (r = 0; r < 5; r++) {
+					xo = random()*(getWidth()-Lx);
+					yo = random()*(getHeight()-Lx);
+					makeRectangle(xo,yo,Lx,Lx);
+					getStatistics(area, mean, min, max, std);
+					if (mean < avg_pix) {
+						avg_pix = mean;
+						_x = xo;
+						_y = yo;
+					}
 				}
+				makeRectangle(_x,_y,Lx,Lx);
+				run("Copy");
+				close();
+				selectImage(STACK);
+				print(S[valid]);
+				setSlice(S[valid]);
+				run("Paste");
+				valid++;
+			} else {
+				close();
 			}
-			makeRectangle(_x,_y,Lx,Lx);
-			run("Copy");
-			close();
-			selectImage(STACK);
-			setSlice(S[valid]);
-			run("Paste");
-			valid++;
-		} else {
-			close();
 		}
 	}
 }

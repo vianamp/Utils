@@ -2,7 +2,7 @@ rm(list=ls(all=TRUE))
 
 for (page in seq(0,10,1)) {
 
-  cmd <- paste('wget --user-agent="NOT WGET" http://arxiv.org/find/grp_q-bio,grp_stat,grp_cs,grp_q-fin,grp_math,grp_physics/1/ti:+seismic/0/1/0/all/0/1?skip=',page*25,' -O ~/Desktop/arxiv/search.txt',sep="")
+  cmd <- paste('wget --user-agent="NOT WGET" http://arxiv.org/find/grp_q-bio,grp_stat,grp_cs,grp_q-fin,grp_math,grp_physics/1/ti:+gravitational/0/1/0/2016/0/1?skip=',page*25,' -O ~/Desktop/arxiv/search.txt',sep="")
   
   system(cmd)
   
@@ -24,6 +24,4 @@ for (page in seq(0,10,1)) {
     system(cmd)
   }
   
-}  
-  
-  
+} 

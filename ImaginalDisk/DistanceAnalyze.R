@@ -24,12 +24,13 @@ TransformIntoPercentageInterval <- function(Vec) {
 
 tEduDAPI <- 50
 nGroups <- 5
-gylim <- 0.002
+gylim <- 0.005
 
-folders<-list(path=c("/Volumes/WAILERS/UCI/Collaborators/Marcos/Data/May2016/EarlyInstar/",
+folders<-list(path=c("/Volumes/WAILERS/UCI/Collaborators/Marcos/Data/May2016/VeryEarlyInstar/",
+                     "/Volumes/WAILERS/UCI/Collaborators/Marcos/Data/May2016/EarlyInstar/",
                      "/Volumes/WAILERS/UCI/Collaborators/Marcos/Data/May2016/LateInstar/",
                      "/Volumes/WAILERS/UCI/Collaborators/Marcos/Data/Feb2016/WT2/"),
-              name=c("EarlyInstar","LateInstar","OldWTData"))
+              name=c("VeryEarlyInstar","EarlyInstar","LateInstar","OldWTData"))
 
 Sizes <- NULL
 

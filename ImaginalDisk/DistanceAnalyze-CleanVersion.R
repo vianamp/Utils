@@ -3,9 +3,93 @@ rm(list=ls(all=TRUE))
 
 library(plyr)
 library(tidyr)
+library(MASS)
 library(scales)
 library(ggplot2)
 library(gridExtra)
+
+TransformIntoPercentageInterval <- function(Vec) {
+  Vec <- factor(     x = Vec,
+                     levels = seq(0,9,1),
+                     labels = paste(seq(0,90,10),'%','-',seq(10,100,10),'%',sep=""))
+  return(Vec)
+}
+
+RollingAverageXY <- function(table,varx,vary,varclass,n) {
+  idx <- which(names(table)==varx)
+  idy <- which(names(table)==vary)
+  idclass <- which(names(table)==varclass)
+  
+  Q <- NULL
+  for (group in levels(table[,idclass])) {
+    
+    or_data <- table[which(table[,idclass]==group),c(idx,idy)]
+    data <- or_data
+    data[,1] <- scale(or_data[,1])[,1]
+    data[,2] <- scale(or_data[,2])[,1]
+    v <- cov.trob(data)
+    center <- v$center
+    if (summary(lm(data[,2]~data[,1]))$coefficients[2,4] < 0.04) {
+      chol_decomp <- chol(v$cov)
+      segments <- 501    
+      angles <- (0:segments) * 1 * pi/segments
+      unit.circle <- cbind(cos(angles), sin(angles))
+      ellipse <- data.frame(t(t(unit.circle %*% chol_decomp)))
+      angle <- angles[which.max(sqrt(ellipse[,1]^2+ellipse[,2]^2))]      
+    } else {
+      angle <- 0
+    }
+    
+    data$rx <-  (data[,1]-center[1])*cos(angle) + (data[,2]-center[2])*sin(angle)
+    data$ry <- -(data[,1]-center[1])*sin(angle) + (data[,2]-center[2])*cos(angle)
+    
+    o <- order(data$rx)
+    
+    N <- nrow(data)
+    for (i in seq(n+1,length(o)-n,n)) {
+      xm <- mean(or_data[o[(i-n):(i+n)],1])
+      xs <-   sd(or_data[o[(i-n):(i+n)],1])
+      xc <- xs / sqrt(N) * qt(0.95/2 + .5, N-1)  
+      ym <- mean(or_data[o[(i-n):(i+n)],2])
+      ys <-   sd(or_data[o[(i-n):(i+n)],2])
+      yc <- ys / sqrt(N) * qt(0.95/2 + .5, N-1)  
+      Q <- rbind(Q,data.frame(x=xm,sdx=xs,xci=xc,y=ym,sdy=ys,yci=yc,group=group))
+    }
+  }
+  
+  names(Q)[c(1,4,7)] <- c(names(or_data),varclass)
+  
+  return(Q)
+}
+
+summarySE <- function(data=NULL, measurevar, groupvars=NULL, na.rm=FALSE, conf.interval=.95, .drop=TRUE) {
+  
+  length2 <- function (x, na.rm=FALSE) {
+    if (na.rm) {
+      sum(!is.na(x))
+    } else {
+      length(x)
+    }
+  }
+  
+  datac <- ddply(data, groupvars, .drop=.drop, .fun =
+                   function(xx, col) {
+                     c(N = length2(xx[[col]], na.rm=na.rm),
+                       mean = mean (xx[[col]], na.rm=na.rm),
+                       sd = sd (xx[[col]], na.rm=na.rm))
+                   },
+                 measurevar
+  )
+  
+  datac <- rename(datac, c("mean" = measurevar))
+  
+  datac$se <- datac$sd / sqrt(datac$N)
+  
+  ciMult <- qt(conf.interval/2 + .5, datac$N-1)
+  datac$ci <- datac$se * ciMult
+  
+  return(datac)
+}
 
 CreateNormAttribute <- function(Table,name) {
   id <- which(names(Table)==name)
@@ -91,7 +175,8 @@ for (text in unique(paste(Threshold$folder,Threshold$file,sep='.'))) {
   Table <- CreateNormAttribute(Table,"dapi")
   Table <- CreateNormAttribute(Table,"edu")
   Table <- within(Table,Prol<-edu/dapi)
-  Table <- within(Table,Dividing<-Prol>=thresh)
+  Table <- within(Table,Dividing<-as.numeric(Prol>=thresh))
+  Table$Dividing <- Table$Dividing / sum(Table$Dividing)
   Table <- within(Table,Disk<-name)
 
   if (length(which(FoldExt$Disk==name)) > 0) {
@@ -112,9 +197,31 @@ Sizes$Class[order(Sizes$AreaFold)] <- Groups
 
 Global$Class <- Sizes$Class[match(Global$Disk,Sizes$Disk)]
 
-ggplot(Global) + geom_point(aes(x=Normd,y=Prol),size=2) + 
-  #coord_cartesian(ylim = c(0,1)) + ggtitle(name) +
-  geom_vline(aes(xintercept=FoldExt))+
-  facet_wrap(~Class)
+Global$NormdBin <- findInterval(Global$Normd, seq(0.1,0.9,0.02))
 
-save(Global,file = "~/Dropbox/global.RData")
+nbins = length(unique(Global$NormdBin))
+
+Global$NormdBinP <- Global$NormdBin
+
+Global <- subset(Global,!is.na(FoldExt))
+
+Q <- list()
+for (c in seq(1,5,1)) {
+  Q[['Table']][[c]] <- summarySE(subset(Global,Class==c), "Dividing", "NormdBinP")
+  Q[['Folds']][[c]] <- data.frame(FoldExt = nbins * unique(subset(Global,Class==c)$FoldExt))
+}
+
+Figs <- list()
+xaxis <- seq(0,nbins,4)
+xlabels <- format(round(100*(xaxis/nbins),1), nsmall = 1)
+for (c in seq(1,5,1)) {
+    Figs[[c]] <- ggplot(Q$Table[[c]]) +
+      geom_vline(data=Q$Folds[[c]],aes(xintercept=FoldExt),alpha=0.7) +
+      geom_point(aes(NormdBinP,Dividing),col='red') +
+      geom_errorbar(aes(x=NormdBinP,y=Dividing,ymin=Dividing-ci,ymax=Dividing+ci), width=0.5,position=position_dodge(.9)) +
+      coord_cartesian(ylim=c(0,0.3)) + theme(axis.text.x = element_text(angle = 45, hjust = 1)) + ggtitle(paste('Group:',c)) +
+      scale_x_continuous(breaks=xaxis,labels=xlabels)
+}
+
+do.call(grid.arrange, Figs)
+

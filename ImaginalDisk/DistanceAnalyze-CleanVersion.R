@@ -101,7 +101,7 @@ CreateNormAttribute <- function(Table,name) {
 
 tEduDAPI <- 50
 nGroups <- 5
-gylim <- 0.005
+gylim <- 0.2
 
 folders<-list(path=c("/Volumes/WAILERS/UCI/Collaborators/Marcos/Data/May2016/VeryEarlyInstar/",
                      "/Volumes/WAILERS/UCI/Collaborators/Marcos/Data/May2016/EarlyInstar/",
@@ -176,7 +176,7 @@ for (text in unique(paste(Threshold$folder,Threshold$file,sep='.'))) {
   Table <- CreateNormAttribute(Table,"edu")
   Table <- within(Table,Prol<-edu/dapi)
   Table <- within(Table,Dividing<-as.numeric(Prol>=thresh))
-  Table$Dividing <- Table$Dividing / sum(Table$Dividing)
+  #Table$Dividing <- Table$Dividing / sum(Table$Dividing)
   Table <- within(Table,Disk<-name)
 
   if (length(which(FoldExt$Disk==name)) > 0) {
@@ -197,7 +197,7 @@ Sizes$Class[order(Sizes$AreaFold)] <- Groups
 
 Global$Class <- Sizes$Class[match(Global$Disk,Sizes$Disk)]
 
-Global$NormdBin <- findInterval(Global$Normd, seq(0.1,0.9,0.02))
+Global$NormdBin <- findInterval(Global$Normd, seq(0.1,0.9,0.1))
 
 nbins = length(unique(Global$NormdBin))
 
@@ -206,22 +206,22 @@ Global$NormdBinP <- Global$NormdBin
 Global <- subset(Global,!is.na(FoldExt))
 
 Q <- list()
-for (c in seq(1,5,1)) {
+for (c in seq(1,nGroups,1)) {
   Q[['Table']][[c]] <- summarySE(subset(Global,Class==c), "Dividing", "NormdBinP")
   Q[['Folds']][[c]] <- data.frame(FoldExt = nbins * unique(subset(Global,Class==c)$FoldExt))
 }
 
 Figs <- list()
-xaxis <- seq(0,nbins,4)
+xaxis <- seq(0,nbins,2)
 xlabels <- format(round(100*(xaxis/nbins),1), nsmall = 1)
-for (c in seq(1,5,1)) {
+for (c in seq(1,nGroups,1)) {
     Figs[[c]] <- ggplot(Q$Table[[c]]) +
       geom_vline(data=Q$Folds[[c]],aes(xintercept=FoldExt),alpha=0.7) +
       geom_point(aes(NormdBinP,Dividing),col='red') +
       geom_errorbar(aes(x=NormdBinP,y=Dividing,ymin=Dividing-ci,ymax=Dividing+ci), width=0.5,position=position_dodge(.9)) +
-      coord_cartesian(ylim=c(0,0.3)) + theme(axis.text.x = element_text(angle = 45, hjust = 1)) + ggtitle(paste('Group:',c)) +
+      coord_cartesian(ylim=c(0,gylim)) + theme(axis.text.x = element_text(angle = 45, hjust = 1)) + ggtitle(paste('Group:',c)) +
       scale_x_continuous(breaks=xaxis,labels=xlabels)
 }
 
-do.call(grid.arrange, Figs)
 
+pdf(paste("~/Desktop/FracOfDivCells-ColorAllTogether-tEduDAPI",tEduDAPI,".pdf",sep=""),width = 10, height=3,useDingbats=F);do.call(grid.arrange, c(Figs,ncol=nGroups)); dev.off()

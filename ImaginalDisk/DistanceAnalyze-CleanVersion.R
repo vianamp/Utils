@@ -100,7 +100,7 @@ CreateNormAttribute <- function(Table,name) {
 }
 
 tEduDAPI <- 50
-nGroups <- 5
+nGroups <- 3
 gylim <- 0.2
 
 folders<-list(path=c("/Volumes/WAILERS/UCI/Collaborators/Marcos/Data/May2016/VeryEarlyInstar/",
@@ -197,7 +197,7 @@ Sizes$Class[order(Sizes$AreaFold)] <- Groups
 
 Global$Class <- Sizes$Class[match(Global$Disk,Sizes$Disk)]
 
-Global$NormdBin <- findInterval(Global$Normd, seq(0.1,0.9,0.1))
+Global$NormdBin <- findInterval(Global$Normd, seq(0.1,0.9,0.08))
 
 nbins = length(unique(Global$NormdBin))
 
@@ -212,16 +212,21 @@ for (c in seq(1,nGroups,1)) {
 }
 
 Figs <- list()
-xaxis <- seq(0,nbins,2)
-xlabels <- format(round(100*(xaxis/nbins),1), nsmall = 1)
+xlabels <- seq(0,100,25)
+xaxis <- seq(0,nbins,nbins/(length(xlabels)-1))
+#xlabels <- format(xlabels, nsmall = 1)
 for (c in seq(1,nGroups,1)) {
     Figs[[c]] <- ggplot(Q$Table[[c]]) +
-      geom_vline(data=Q$Folds[[c]],aes(xintercept=FoldExt),alpha=0.7) +
+      geom_vline(data=Q$Folds[[c]],aes(xintercept=FoldExt),alpha=0.2,size=2,color='blue') +
       geom_point(aes(NormdBinP,Dividing),col='red') +
       geom_errorbar(aes(x=NormdBinP,y=Dividing,ymin=Dividing-ci,ymax=Dividing+ci), width=0.5,position=position_dodge(.9)) +
-      coord_cartesian(ylim=c(0,gylim)) + theme(axis.text.x = element_text(angle = 45, hjust = 1)) + ggtitle(paste('Group:',c)) +
-      scale_x_continuous(breaks=xaxis,labels=xlabels)
+      ggtitle(paste('Group:',c)) + theme_bw() +
+      scale_x_continuous(breaks=xaxis,labels=xlabels) +
+      coord_cartesian(xlim=c(-0.05*nbins,1.05*nbins),ylim=c(0,0.25)) +
+      ylab('fraction of proliferating cells') +
+      xlab('distance from the fold (%)')
 }
 
 
-pdf(paste("~/Desktop/FracOfDivCells-ColorAllTogether-tEduDAPI",tEduDAPI,".pdf",sep=""),width = 10, height=3,useDingbats=F);do.call(grid.arrange, c(Figs,ncol=nGroups)); dev.off()
+#pdf(paste("~/Desktop/FracOfDivCells-ColorAllTogether-tEduDAPI",tEduDAPI,".pdf",sep=""),width = 16, height=4,useDingbats=F);do.call(grid.arrange, c(Figs,ncol=nGroups)); dev.off()
+pdf(paste("~/Desktop/here.pdf",sep=""),width = 15, height=5,useDingbats=F);do.call(grid.arrange, c(Figs,ncol=nGroups)); dev.off()

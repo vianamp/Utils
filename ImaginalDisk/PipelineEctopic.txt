@@ -1,0 +1,36 @@
+WARNING: Download 29C39H-Exp
+============================
+
+1 - Run Reslice2.ijm and save the smooth volume (can be improved)
+	> Check which channels of .lsm files correspond to EDU and DAPI
+	> Make sure there is no "." in .lsm files names
+	> Check the images Preview-XXX to see whether ROI matches the resulting images
+	> If hyperstack if inverted along z, uncomment the two lines run("Reverse");
+	> If hyperstack if inverted along x, uncomment the two lines run("Flip Horizontally", "stack");
+
+2 - Use gendisk.py in paraview to create 3D surface
+	> Remove "-smooth" from disks file's name
+
+3 - Use makeboxEctopic.py in Paraview to generate the box by hand
+	> Extract surface and clean before saving
+
+4 - Run dapiSeg.cxx to get the files _Points.vtk
+
+5 - Run proQuant.cxx to get the files _results.txt
+
+6 - Run TestEDU-DAPI-Ratio.ijm
+	> Check which channels of .lsm files correspond to EDU and DAPI
+
+7 - Use flatextension.py in paraview to calculate the area of the flat region.
+
+8 - Run DistanceAnalyze.R
+
+----------------------
+original:
+	xy = 0.1317882µm
+	dz = 1.5µm
+
+sliced:
+	xy = 0.1317882µm
+	dz = 1.0µm
+----------------------

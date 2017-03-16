@@ -2,6 +2,11 @@ _RootFolder = getDirectory("Choose a Directory");
 
 setBatchMode(true);
 
+_ectopic_fold = true;
+
+_reverse_z = false;
+_flip_x = false;
+
 _FileList = getFileList(_RootFolder);
 
 i = 0;
@@ -20,6 +25,12 @@ while (i < _FileList.length)  {
 	
 		run("Duplicate...", "title=ToProcess duplicate channels=1");
 		DUPC1 = getImageID;
+		if (_reverse_z) {
+			run("Reverse");
+		}
+		if(_flip_x) {
+			run("Flip Horizontally", "stack");
+		}
 		run("Reslice [/]...", "output=1.0 start=Left");
 		w = getWidth;
 		h = getHeight;
@@ -34,6 +45,12 @@ while (i < _FileList.length)  {
 		selectImage(ORIGINAL);
 		run("Duplicate...", "title=ToProcess duplicate channels=2");
 		DUPC2 = getImageID;
+		if (_reverse_z) {
+			run("Reverse");
+		}
+		if(_flip_x) {
+			run("Flip Horizontally", "stack");
+		}
 		run("Reslice [/]...", "output=1.0 start=Left");
 		RESC2 = getImageID;
 		setSlice(nSlices*0.5);
@@ -41,6 +58,27 @@ while (i < _FileList.length)  {
 		run("Save", "save=" + _RootFolder + "/" + _Prefix + "-DAPI.tif");
 		selectImage(DUPC2);
 		close();
+
+		if (_ectopic_fold) {
+
+			selectImage(ORIGINAL);
+			run("Duplicate...", "title=ToProcess duplicate channels=1");
+			DUPC3 = getImageID;
+			if (_reverse_z) {
+				run("Reverse");
+			}
+			if(_flip_x) {
+				run("Flip Horizontally", "stack");
+			}
+			run("Reslice [/]...", "output=1.0 start=Left");
+			RESC3 = getImageID;
+			setSlice(nSlices*0.5);
+			resetMinAndMax();
+			run("Save", "save=" + _RootFolder + "/" + _Prefix + "-GFP.tif");
+			selectImage(DUPC3);
+			close();
+
+		}
 
 		selectImage(ORIGINAL);
 		close();
@@ -58,7 +96,11 @@ while (i < _FileList.length)  {
 		roiManager("select",0.5*roiManager("count"));
 		resetMinAndMax();
 		run("Draw", "slice");
-		run("Merge Channels...", "c1="+_Prefix + "-EDU.tif c2="+_Prefix + "-DAPI.tif");
+		if (_ectopic_fold) {
+			run("Merge Channels...", "c1="+_Prefix + "-GFP.tif c2="+_Prefix + "-DAPI.tif");
+		} else {
+			run("Merge Channels...", "c1="+_Prefix + "-EDU.tif c2="+_Prefix + "-DAPI.tif");
+		}
 		selectWindow("RGB");
 		roiManager("select",0.5*roiManager("count"));
 		saveAs("PNG", _RootFolder + "/Preview-" + _Prefix + ".png");
@@ -83,7 +125,7 @@ while (i < _FileList.length)  {
 		run("Gaussian Blur 3D...", "x=5 y=5 z=5");
 		run("Gaussian Blur...", "sigma=20 stack");
 
-		saveAs("Tiff", _RootFolder + "/" + _Prefix + "-Smooth.tif");
+		saveAs("Tiff", _RootFolder + "/" + _Prefix + ".tif");
 		
 		close();
 	}

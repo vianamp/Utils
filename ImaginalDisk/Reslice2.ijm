@@ -31,7 +31,7 @@ while (i < _FileList.length)  {
 		if(_flip_x) {
 			run("Flip Horizontally", "stack");
 		}
-		run("Reslice [/]...", "output=1.0 start=Left");
+		run("Reslice [/]...", "output=1.0 start=Top");
 		w = getWidth;
 		h = getHeight;
 		n = nSlices;
@@ -51,7 +51,7 @@ while (i < _FileList.length)  {
 		if(_flip_x) {
 			run("Flip Horizontally", "stack");
 		}
-		run("Reslice [/]...", "output=1.0 start=Left");
+		run("Reslice [/]...", "output=1.0 start=Top");
 		RESC2 = getImageID;
 		setSlice(nSlices*0.5);
 		resetMinAndMax();
@@ -70,7 +70,7 @@ while (i < _FileList.length)  {
 			if(_flip_x) {
 				run("Flip Horizontally", "stack");
 			}
-			run("Reslice [/]...", "output=1.0 start=Left");
+			run("Reslice [/]...", "output=1.0 start=Top");
 			RESC3 = getImageID;
 			setSlice(nSlices*0.5);
 			resetMinAndMax();

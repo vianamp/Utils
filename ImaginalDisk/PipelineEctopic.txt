@@ -11,15 +11,14 @@ WARNING: Download 29C39H-Exp
 2 - Use gendisk.py in paraview to create 3D surface
 	> Remove "-smooth" from disks file's name
 
-3 - Use makeboxEctopic.py in Paraview to generate the box by hand
-	> Extract surface and clean before saving
+3 - Use makeboxEctopic.py in Paraview to generate the box and move it to the right place. Next use makeboxEctopic2.py to save the fold as xx-Disk-Dec.vtk
 
 4 - Run dapiSeg.cxx to get the files _Points.vtk
 
-5 - Run proQuant.cxx to get the files _results.txt
+5 - Run proQuant.cxx with the flag -ectopic for Experiment and -ectopic -fixed_center for Control to get the files _results.txt
 
 6 - Run TestEDU-DAPI-Ratio.ijm
-	> Check which channels of .lsm files correspond to EDU and DAPI
+	> Check which channels of .lsm files correspond to EDU and DAPI (1st EDU, 2nd DAPI)
 
 7 - Use flatextension.py in paraview to calculate the area of the flat region.
 

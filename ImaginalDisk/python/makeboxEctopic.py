@@ -3,33 +3,67 @@ import os
 import vtk
 import math
 import numpy
+from paraview.simple import *
 import paraview.servermanager
 
-fold_on_right_side = 0
+paraview.simple._DisableFirstRenderCameraReset()
 
-#Active Render
+#
+# Load data
+#
+
+RootFolder = '/Volumes/WAILERS/UCI/Collaborators/Marcos/Data/EctopicExperiment_new/Temp/29C39H/Experimental'
+
+File = 'CA_8_39h29C_Exp_B8'
+
+Vol = TIFFSeriesReader(FileNames=[os.path.join(RootFolder,File+'-GFP.tif')])
+Dsk = LegacyVTKReader(FileNames=[os.path.join(RootFolder,File+'-Disk.vtk')])
+
 renderView1 = GetActiveViewOrCreate('RenderView')
 
-#Active source
-S = GetActiveSource()
+#
+# 3D View Volume
+#
 
-#Source file name
-FileName = os.path.basename(GetActiveSource().FileNames[0])
-FileName = os.path.splitext(FileName)[0]
+Vol.UseCustomDataSpacing = 1
+Vol.CustomDataSpacing = [1.0, 1.0, 7.58]
+VolDisplay = Show(Vol, renderView1)
+VolDisplay.SetRepresentationType('Volume')
 
-#Source Path
-Path = os.path.dirname(GetActiveSource().FileNames[0])
+#
+# 3D View Disk
+#
 
-#Creating clipping boundaries
-L = S.GetDataInformation().GetBounds()
-Lx = L[1]-L[0]
-Ly = L[3]-L[2]
-Lz = L[5]-L[4]
+DskDisplay = Show(Dsk, renderView1)
+DskDisplay.Opacity = 0.90
 
-#Creating clipping box
-clip1 = Clip(Input=S)
-clip1.ClipType = 'Box'
-clip1.Scalars = ['POINTS', '']
-clip1.ClipType.Bounds = [L[0]+0.25*Lx,L[0]+0.75*Lx,L[2],L[3],L[4]+0.3*Lz,L[4]+0.6*Lz]
-clip1.InsideOut = 1
-clip1Display = Show(clip1, renderView1)
+renderView1.ResetCamera()
+
+#
+# Clip
+#
+
+L = Dsk.GetDataInformation().GetBounds()
+
+Rx = 0.5*(L[1]-L[0])
+Ry = 0.5*(L[3]-L[2])
+Rz = 0.5*(L[5]-L[4])
+
+Xo = L[0]
+Yo = L[2]
+Zo = L[4]
+
+Xm = Xo + Rx
+Ym = Yo + Ry
+Zm = Zo + Rz
+
+Clip = Clip(Input=Dsk)
+Clip.ClipType = 'Box'
+Clip.Scalars = [None, '']
+Clip.InsideOut = 1
+
+Clip.ClipType.Bounds = [Xm-0.5*Rx,Xm+0.5*Rx,Ym-Ry,Ym+Ry,Zm-0.25*Rz,Zm+0.25*Rz]
+
+Show3DWidgets(proxy=Clip)
+
+renderView1.ResetCamera()

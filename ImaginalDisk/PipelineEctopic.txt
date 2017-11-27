@@ -16,6 +16,7 @@ WARNING: Download 29C39H-Exp
 4 - Run dapiSeg.cxx to get the files _Points.vtk
 
 5 - Run proQuant.cxx with the flag -ectopic for Experiment and -ectopic -fixed_center for Control to get the files _results.txt
+	> Run PolyDataReaderFix.py in Paraview if there is incompatible versions (4.2 vs. 4.0) between readers.
 
 6 - Run TestEDU-DAPI-Ratio.ijm
 	> Check which channels of .lsm files correspond to EDU and DAPI (1st EDU, 2nd DAPI)

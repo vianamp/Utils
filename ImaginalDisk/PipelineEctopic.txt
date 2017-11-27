@@ -1,6 +1,3 @@
-WARNING: Download 29C39H-Exp
-============================
-
 1 - Run Reslice2.ijm and save the smooth volume (can be improved)
 	> Check which channels of .lsm files correspond to EDU and DAPI
 	> Make sure there is no "." in .lsm files names

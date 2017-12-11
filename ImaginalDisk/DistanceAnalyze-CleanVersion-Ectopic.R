@@ -13,62 +13,7 @@ library(scales)
 library(ggplot2)
 library(gridExtra)
 
-TransformIntoPercentageInterval <- function(Vec) {
-  Vec <- factor(     x = Vec,
-                     levels = seq(0,9,1),
-                     labels = paste(seq(0,90,10),'%','-',seq(10,100,10),'%',sep=""))
-  return(Vec)
-}
-
-RollingAverageXY <- function(table,varx,vary,varclass,n) {
-  idx <- which(names(table)==varx)
-  idy <- which(names(table)==vary)
-  idclass <- which(names(table)==varclass)
-  
-  Q <- NULL
-  for (group in levels(table[,idclass])) {
-    
-    or_data <- table[which(table[,idclass]==group),c(idx,idy)]
-    data <- or_data
-    data[,1] <- scale(or_data[,1])[,1]
-    data[,2] <- scale(or_data[,2])[,1]
-    v <- cov.trob(data)
-    center <- v$center
-    if (summary(lm(data[,2]~data[,1]))$coefficients[2,4] < 0.04) {
-      chol_decomp <- chol(v$cov)
-      segments <- 501    
-      angles <- (0:segments) * 1 * pi/segments
-      unit.circle <- cbind(cos(angles), sin(angles))
-      ellipse <- data.frame(t(t(unit.circle %*% chol_decomp)))
-      angle <- angles[which.max(sqrt(ellipse[,1]^2+ellipse[,2]^2))]      
-    } else {
-      angle <- 0
-    }
-    
-    data$rx <-  (data[,1]-center[1])*cos(angle) + (data[,2]-center[2])*sin(angle)
-    data$ry <- -(data[,1]-center[1])*sin(angle) + (data[,2]-center[2])*cos(angle)
-    
-    o <- order(data$rx)
-    
-    N <- nrow(data)
-    for (i in seq(n+1,length(o)-n,n)) {
-      xm <- mean(or_data[o[(i-n):(i+n)],1])
-      xs <-   sd(or_data[o[(i-n):(i+n)],1])
-      xc <- xs / sqrt(N) * qt(0.95/2 + .5, N-1)  
-      ym <- mean(or_data[o[(i-n):(i+n)],2])
-      ys <-   sd(or_data[o[(i-n):(i+n)],2])
-      yc <- ys / sqrt(N) * qt(0.95/2 + .5, N-1)  
-      Q <- rbind(Q,data.frame(x=xm,sdx=xs,xci=xc,y=ym,sdy=ys,yci=yc,group=group))
-    }
-  }
-  
-  names(Q)[c(1,4,7)] <- c(names(or_data),varclass)
-  
-  return(Q)
-}
-
 summarySE <- function(data=NULL, measurevar, groupvars=NULL, na.rm=FALSE, conf.interval=.95, .drop=TRUE) {
-  
   length2 <- function (x, na.rm=FALSE) {
     if (na.rm) {
       sum(!is.na(x))
@@ -76,7 +21,6 @@ summarySE <- function(data=NULL, measurevar, groupvars=NULL, na.rm=FALSE, conf.i
       length(x)
     }
   }
-  
   datac <- ddply(data, groupvars, .drop=.drop, .fun =
                    function(xx, col) {
                      c(N = length2(xx[[col]], na.rm=na.rm),
@@ -85,14 +29,10 @@ summarySE <- function(data=NULL, measurevar, groupvars=NULL, na.rm=FALSE, conf.i
                    },
                  measurevar
   )
-  
   datac <- rename(datac, c("mean" = measurevar))
-  
   datac$se <- datac$sd / sqrt(datac$N)
-  
   ciMult <- qt(conf.interval/2 + .5, datac$N-1)
   datac$ci <- datac$se * ciMult
-  
   return(datac)
 }
 
@@ -108,18 +48,15 @@ tEduDAPI <- 50
 nGroups <- 3
 gylim <- 0.2
 
-folders<-list(path=c("/Volumes/WAILERS/UCI/Collaborators/Marcos/Data/EctopicExperiment_new/Temp/29C13H/Control/",
-                     "/Volumes/WAILERS/UCI/Collaborators/Marcos/Data/EctopicExperiment_new/Temp/29C13H/Experimental/"),
+folders<-list(path=c("/Volumes/WAILERS/UCI/Collaborators/Marcos/Data/NoFoldExperiment-TimeVaryingData/29C26H/Control/",
+                     "/Volumes/WAILERS/UCI/Collaborators/Marcos/Data/NoFoldExperiment-TimeVaryingData/29C26H/Experimental/"),
               name=c("Ctrl",
                      "Exp"))
 
 # Edu-to-DAPI thresholds
-
 Threshold <- NULL
 for(RootFolder in folders$path) {
-  
   ratios <- list.files(path = RootFolder, pattern = "\\-Ratio.txt$")
-  
   TH <- NULL
   for (name in ratios) {
     Table <- read.table(file = paste(RootFolder,"/",name,sep=""),header = F,skip = 1)
@@ -133,31 +70,30 @@ for(RootFolder in folders$path) {
     TH <- rbind(TH,data.frame(ratio=Table$EDU/Table$DAPI,file=temp,folder=RootFolder))
   }
   Threshold <- rbind(Threshold,TH)
-}  
+}
 
 fig <- ggplot(Threshold) + geom_boxplot(aes(x=file,y=ratio,fill=file)) + theme_bw() +
   theme(legend.position="none",axis.text.x = element_text(angle = 90, hjust = 0)) +
   ggtitle(paste("global average = ",mean(Threshold$ratio),sep="")) +
   coord_cartesian(ylim = c(0,5))
-
 pdf("~/Desktop/ImaginalDisk/EduDapiRatios.pdf",width = 16, height = 8,useDingbats=F); fig; dev.off()
+
 
 id <- 1
 Fig <- list()
 Global <- NULL
 for (text in unique(paste(Threshold$folder,Threshold$file,sep='.'))) {
-  
   RootFolder <- strsplit(text,'\\.')[[1]][1]
   Cond <- strsplit(RootFolder,'/')
   Cond <- Cond[[1]][length(Cond[[1]])]
   name <- strsplit(text,'\\.')[[1]][2]
-  
   Table <- data.frame(read.table(file = paste(RootFolder,"/",name,"_results.txt",sep=""),header = F))
   names(Table) <- c("x","y","z","d","dapi","edu")
-  
+  pd <- as.numeric(quantile(Table$d,c(0.025,0.975)))
+  Table$d[which(Table$d<pd[1])] <- pd[1]
+  Table$d[which(Table$d>pd[2])] <- pd[2]
   thresh <- (tEduDAPI/100)*mean(Threshold$ratio[which(Threshold$file==name)])
   print(thresh)
-  
   Table <- CreateNormAttribute(Table,"d")
   Table <- CreateNormAttribute(Table,"dapi")
   Table <- CreateNormAttribute(Table,"edu")
@@ -166,39 +102,43 @@ for (text in unique(paste(Threshold$folder,Threshold$file,sep='.'))) {
   #Table$Dividing <- Table$Dividing / sum(Table$Dividing)
   Table <- within(Table,Disk<-name)
   Table <- within(Table,Cond<-Cond)
-  
-  #if (length(which(FoldExt$Disk==name)) > 0) {
-  #  Table$FoldExt <- FoldExt$FoldExtension[which(FoldExt$Disk==name)]
-  #} else {
-  #  Table$FoldExt <- NA
-  #}
-  
   Global <- rbind(Global,Table)
   id <- id + 1
 }
 
-Global$NormdBin <- findInterval(Global$Normd, seq(0.1,0.9,0.08))
-
-#Q <- list()
-#for (c in seq(1,nGroups,1)) {
-#  Q[['Table']][[c]] <- summarySE(Global, "Dividing", "NormdBinP")
-#  Q[['Folds']][[c]] <- data.frame(FoldExt = nbins * unique(subset(Global,Class==c)$FoldExt))
-#}
-
-ggplot(Global) + geom_smooth(aes(Normd,Prol),method='loess') + facet_wrap(~Cond)
+Global$NormdBin <- findInterval(Global$Normd, seq(0.0,1.0,length.out=10))
 
 Global$Cond <- as.factor(Global$Cond)
 
-q<-summarySE(Global, "Dividing", c("NormdBin","Cond"))
+q <- summarySE(Global, "Dividing", c("NormdBin","Cond"))
 
-fig <- ggplot(q) + geom_errorbar(aes(x=NormdBin,y=Dividing,ymin=Dividing-ci,ymax=Dividing+ci), width=0.5,position=position_dodge(.9)) +
-  geom_point(aes(NormdBin,Dividing,col=Cond),size=2)
+vertical_refs_29C26h = data.frame(pos=10*c(0.368,0.535,0.520,0.417,0.517))
+vertical_refs_29C39h = data.frame(pos=10*c(0.344,0.400,0.277,0.220,0.200))
 
-pdf("~/Desktop/ImaginalDisk/Curve1.pdf",width = 5, height = 4,useDingbats=F); fig; dev.off()
+fig <- ggplot(q) + geom_errorbar(aes(x=NormdBin,ymin=Dividing-ci,ymax=Dividing+ci), width=0.5,position=position_dodge(.9)) +
+  geom_point(aes(NormdBin,Dividing,col=Cond),size=2) +
+  scale_x_continuous(name='Distance (%)',breaks=seq(1,10,length.out=10),labels=paste(seq(0,90,10),seq(10,100,10),sep='-')) +
+  theme_bw() + coord_cartesian(ylim=c(0.0,0.5)) +
+  geom_vline(data=vertical_refs_29C26h,aes(xintercept=pos))
 
-q <- RollingAverageXY(Global,"Normd","Dividing","Cond",1000)
+pdf("~/Desktop/ImaginalDisk/Curve1_new.pdf",width = 8, height = 5,useDingbats=F); fig; dev.off()
 
-fig <- ggplot(q) + geom_errorbar(aes(x=Normd,y=Dividing,ymin=Dividing-yci,ymax=Dividing+yci), width=0.05,position=position_dodge(.9)) +
-  geom_point(aes(Normd,Dividing,col=Cond),size=2)
+#
+# Test limits of "distance"
+#
 
-pdf("~/Desktop/ImaginalDisk/Curve2.pdf",width = 5, height = 4,useDingbats=F); fig; dev.off()
+dplots <- list()
+for (text in unique(paste(Threshold$folder,Threshold$file,sep='.'))) {
+  RootFolder <- strsplit(text,'\\.')[[1]][1]
+  Cond <- strsplit(RootFolder,'/')
+  Cond <- Cond[[1]][length(Cond[[1]])]
+  name <- strsplit(text,'\\.')[[1]][2]
+  Table <- data.frame(read.table(file = paste(RootFolder,"/",name,"_results.txt",sep=""),header = F))
+  names(Table) <- c("x","y","z","d","dapi","edu")
+  pd <- as.numeric(quantile(Table$d,c(0.025,0.975)))
+  Table$d[which(Table$d<pd[1])] <- pd[1]
+  Table$d[which(Table$d>pd[2])] <- pd[2]
+  dplots[[text]] <- ggplot(Table) + geom_histogram(aes(x=d)) + ggtitle(name)
+}
+
+do.call("grid.arrange", c(dplots, ncol=2))

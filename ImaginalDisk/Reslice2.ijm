@@ -38,6 +38,7 @@ while (i < _FileList.length)  {
 		RESC1 = getImageID;
 		setSlice(nSlices*0.5);
 		resetMinAndMax();
+		run("Grays");
 		run("Save", "save=" + _RootFolder + "/" + _Prefix + "-EDU.tif");
 		selectImage(DUPC1);		
 		close();
@@ -55,6 +56,7 @@ while (i < _FileList.length)  {
 		RESC2 = getImageID;
 		setSlice(nSlices*0.5);
 		resetMinAndMax();
+		run("Grays");
 		run("Save", "save=" + _RootFolder + "/" + _Prefix + "-DAPI.tif");
 		selectImage(DUPC2);
 		close();
@@ -74,6 +76,7 @@ while (i < _FileList.length)  {
 			RESC3 = getImageID;
 			setSlice(nSlices*0.5);
 			resetMinAndMax();
+			run("Grays");
 			run("Save", "save=" + _RootFolder + "/" + _Prefix + "-GFP.tif");
 			selectImage(DUPC3);
 			close();

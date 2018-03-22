@@ -12,7 +12,7 @@ _FileList = getFileList(_RootFolder);
 i = 0;
 while (i < _FileList.length)  {
 
-	if ( endsWith(_FileList[i],".lsm") ) {
+	if ( endsWith(_FileList[i],".tif") ) {
 
 		_Prefix = split(_FileList[i],"."); 
 		_Prefix = _Prefix[0];
@@ -23,7 +23,7 @@ while (i < _FileList.length)  {
 		// Reslicing both channels
 		// ------------------------------------------------
 	
-		run("Duplicate...", "title=ToProcess duplicate channels=1");
+		run("Duplicate...", "title=ToProcess duplicate channels=4");
 		DUPC1 = getImageID;
 		if (_reverse_z) {
 			run("Reverse");
@@ -62,7 +62,7 @@ while (i < _FileList.length)  {
 		if (_ectopic_fold) {
 
 			selectImage(ORIGINAL);
-			run("Duplicate...", "title=ToProcess duplicate channels=1");
+			run("Duplicate...", "title=ToProcess duplicate channels=3");
 			DUPC3 = getImageID;
 			if (_reverse_z) {
 				run("Reverse");
@@ -125,7 +125,14 @@ while (i < _FileList.length)  {
 		run("Gaussian Blur 3D...", "x=5 y=5 z=5");
 		run("Gaussian Blur...", "sigma=20 stack");
 
-		saveAs("Tiff", _RootFolder + "/" + _Prefix + ".tif");
+		for (z = 1; z <= nSlices; z++) {
+			setSlice(z);
+			for (x = 0; x < getWidth(); x++) {
+				setPixel(x,0,0);
+			}
+		}
+
+		saveAs("Tiff", _RootFolder + "/" + _Prefix + "-Disk.tif");
 		
 		close();
 	}
